@@ -1,0 +1,1075 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>電話注文 仮受けシステム｜カビラファーム</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=JetBrains+Mono:wght@400;600&display=swap');
+
+  :root {
+    --bg:#f5f3ef;--surface:#fdfcfa;--white:#ffffff;
+    --border:#e0dbd3;--border2:#ece7e0;
+    --navy:#1a3a5c;--navy-mid:#2c5f8a;--navy-light:#e8f0f7;--navy-xlight:#f0f6fc;
+    --trop:#2d7a3a;--trop-light:#e8f5ea;
+    --gift:#8b5a1a;--gift-light:#fdf3e3;
+    --other:#5a3a7a;--other-light:#f3eeff;
+    --fruit:#c0392b;--fruit-light:#fdf0ef;
+    --text:#1a1a1a;--text2:#6b6560;--text3:#aaa59f;
+    --danger:#b83232;--danger-light:#fdf0f0;
+    --success:#1e7a42;--success-light:#eaf5ee;
+    --warning:#b87a1e;--warning-light:#fdf6e8;
+    --shadow:0 1px 8px rgba(0,0,0,0.07);
+    --shadow-lg:0 8px 40px rgba(0,0,0,0.14);
+    --r:14px;--r-sm:9px;
+  }
+
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+
+  /* NAV */
+  nav{background:var(--navy);color:white;height:58px;padding:0 20px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:200;box-shadow:0 2px 20px rgba(26,58,92,.35)}
+  .nav-left{display:flex;align-items:center;gap:16px}
+  .nav-logo{font-size:.9rem;font-weight:900;letter-spacing:.05em}
+  .nav-tabs{display:flex;gap:3px}
+  .nav-tab{padding:6px 14px;border-radius:18px;font-size:.76rem;font-weight:700;cursor:pointer;border:none;font-family:inherit;background:rgba(255,255,255,.1);color:rgba(255,255,255,.7);transition:all .15s;text-decoration:none;display:inline-flex;align-items:center;gap:5px}
+  .nav-tab:hover{background:rgba(255,255,255,.2);color:white}
+  .nav-tab.active{background:white;color:var(--navy)}
+  .nav-right{display:flex;align-items:center;gap:12px}
+  #clock{font-family:'JetBrains Mono',monospace;font-size:1.2rem;font-weight:600}
+  .call-pill{display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.18);padding:6px 13px;border-radius:22px;font-size:.75rem;font-weight:600}
+  .call-dot{width:7px;height:7px;border-radius:50%;background:#5ce080;animation:blink 1.6s infinite}
+  @keyframes blink{0%,100%{opacity:1}50%{opacity:.4}}
+
+  /* LAYOUT */
+  .layout{display:grid;grid-template-columns:1fr 390px;gap:18px;padding:18px;max-width:1260px;margin:0 auto;align-items:start}
+
+  /* CARD */
+  .card{background:var(--white);border-radius:var(--r);border:1px solid var(--border);box-shadow:var(--shadow);overflow:hidden;margin-bottom:14px}
+  .card:last-child{margin-bottom:0}
+  .card-head{background:var(--surface);border-bottom:1px solid var(--border);padding:12px 18px;display:flex;align-items:center;gap:9px}
+  .card-head h2{font-size:.76rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--text2)}
+  .step-num{width:22px;height:22px;border-radius:50%;background:var(--navy);color:white;display:flex;align-items:center;justify-content:center;font-size:.68rem;font-weight:800;flex-shrink:0}
+  .card-body{padding:18px}
+
+  /* FORM */
+  .field{margin-bottom:13px}
+  .field:last-child{margin-bottom:0}
+  label{display:block;font-size:.74rem;font-weight:800;color:var(--text2);margin-bottom:5px;letter-spacing:.04em}
+  .req{color:var(--danger)}
+  input[type=text],input[type=tel],input[type=date],input[type=number],select,textarea{
+    width:100%;padding:12px 14px;border:1.5px solid var(--border);border-radius:var(--r-sm);
+    font-family:inherit;font-size:.96rem;color:var(--text);background:var(--surface);
+    -webkit-appearance:none;appearance:none;transition:border-color .15s,box-shadow .15s}
+  input:focus,select:focus,textarea:focus{outline:none;border-color:var(--navy-mid);box-shadow:0 0 0 3px rgba(44,95,138,.12);background:#fff}
+  select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='7'%3E%3Cpath d='M0 0l5 7 5-7z' fill='%236b6560'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 13px center;padding-right:34px}
+  textarea{min-height:68px;resize:vertical;line-height:1.6}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+  .row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:9px}
+
+  /* ZIP lookup */
+  .zip-wrap{display:flex;gap:8px;align-items:flex-end}
+  .zip-wrap input{max-width:160px}
+  .zip-btn{padding:12px 16px;background:var(--navy);color:white;border:none;border-radius:var(--r-sm);font-family:inherit;font-size:.82rem;font-weight:700;cursor:pointer;white-space:nowrap;transition:all .14s;flex-shrink:0}
+  .zip-btn:hover{background:var(--navy-mid)}
+  .zip-result{margin-top:6px;font-size:.8rem;color:var(--success);font-weight:600;min-height:18px}
+  .zip-error{color:var(--danger)}
+
+  /* ── PRODUCT PALETTE ── */
+  .palette-wrap{position:relative}
+
+  /* Category tabs */
+  .cat-tabs{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap}
+  .cat-tab{padding:7px 14px;border-radius:20px;font-size:.78rem;font-weight:700;cursor:pointer;border:2px solid var(--border);background:white;color:var(--text2);font-family:inherit;transition:all .14s}
+  .cat-tab.active-trop{border-color:var(--trop);background:var(--trop-light);color:var(--trop)}
+  .cat-tab.active-gift{border-color:var(--gift);background:var(--gift-light);color:var(--gift)}
+  .cat-tab.active-fruit{border-color:var(--fruit);background:var(--fruit-light);color:var(--fruit)}
+  .cat-tab.active-other{border-color:var(--other);background:var(--other-light);color:var(--other)}
+
+  /* Product grid */
+  .prod-palette{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
+  .prod-tile{
+    background:var(--surface);border:2px solid var(--border2);border-radius:11px;
+    padding:12px 10px;cursor:pointer;transition:all .14s;
+    display:flex;flex-direction:column;align-items:center;gap:5px;
+    text-align:center;position:relative;user-select:none
+  }
+  .prod-tile:hover{border-color:var(--navy-mid);background:var(--navy-xlight);transform:translateY(-1px);box-shadow:0 3px 12px rgba(44,95,138,.12)}
+  .prod-tile:active{transform:translateY(0);box-shadow:none}
+  .prod-tile.in-cart{border-color:var(--navy);background:var(--navy-light)}
+  .prod-tile-emoji{font-size:1.6rem;line-height:1}
+  .prod-tile-name{font-size:.74rem;font-weight:700;line-height:1.3;color:var(--text)}
+  .prod-tile-price{font-family:'JetBrains Mono',monospace;font-size:.72rem;color:var(--text2);font-weight:600}
+  .prod-tile-badge{
+    position:absolute;top:6px;right:6px;
+    background:var(--navy);color:white;
+    width:20px;height:20px;border-radius:50%;
+    font-size:.68rem;font-weight:800;
+    display:flex;align-items:center;justify-content:center
+  }
+
+  /* Cart */
+  .cart-section{margin-top:4px}
+  .cart-title{font-size:.74rem;font-weight:800;color:var(--text2);letter-spacing:.06em;text-transform:uppercase;margin-bottom:8px}
+  .cart-empty{text-align:center;padding:20px;color:var(--text3);font-size:.82rem}
+
+  .cart-item{display:grid;grid-template-columns:1fr 44px 44px 28px;gap:6px;align-items:center;padding:8px 0;border-bottom:1px solid var(--border2)}
+  .cart-item:last-child{border:none}
+  .ci-name{font-size:.86rem;font-weight:700;line-height:1.3}
+  .ci-price{font-size:.74rem;color:var(--text2);margin-top:2px;font-family:'JetBrains Mono',monospace}
+  .ci-qty{display:flex;align-items:center;gap:0}
+  .qty-btn{width:28px;height:28px;border:1.5px solid var(--border);background:white;border-radius:6px;cursor:pointer;font-size:1rem;font-weight:700;color:var(--text2);display:flex;align-items:center;justify-content:center;transition:all .12s}
+  .qty-btn:hover{border-color:var(--navy-mid);color:var(--navy)}
+  .qty-num{width:28px;text-align:center;font-family:'JetBrains Mono',monospace;font-size:.9rem;font-weight:700}
+  .ci-sub{font-family:'JetBrains Mono',monospace;font-size:.8rem;font-weight:600;text-align:right;color:var(--navy)}
+  .ci-del{background:none;border:none;cursor:pointer;color:var(--text3);font-size:.9rem;padding:4px;transition:color .12s}
+  .ci-del:hover{color:var(--danger)}
+
+  /* Fee panel */
+  .fee-panel{background:var(--navy);border-radius:var(--r-sm);padding:14px 16px;color:white;margin-top:12px}
+  .fee-row{display:flex;justify-content:space-between;align-items:center;padding:4px 0}
+  .fee-lbl{font-size:.8rem;color:rgba(255,255,255,.7)}
+  .fee-val{font-family:'JetBrains Mono',monospace;font-size:.88rem;font-weight:600}
+  .fee-hr{border:none;border-top:1px solid rgba(255,255,255,.2);margin:7px 0}
+  .fee-total-lbl{font-size:.86rem;font-weight:700}
+  .fee-total-val{font-family:'JetBrains Mono',monospace;font-size:1.35rem;font-weight:600}
+  .free-badge{background:#5ce080;color:#0a2a0a;font-size:.65rem;font-weight:800;padding:2px 7px;border-radius:8px;margin-left:5px}
+
+  /* Chips */
+  .chips{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:9px}
+  .chip{padding:5px 12px;border:1.5px solid var(--border);border-radius:18px;font-size:.76rem;cursor:pointer;background:white;color:var(--text2);font-family:inherit;font-weight:600;transition:all .12s}
+  .chip:hover{border-color:var(--navy-mid);color:var(--navy-mid);background:var(--navy-light)}
+
+  /* Status */
+  .status-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+  .st-btn{padding:13px 6px;border:2px solid var(--border);border-radius:10px;background:white;cursor:pointer;font-family:inherit;font-size:.82rem;font-weight:700;color:var(--text2);transition:all .13s;text-align:center;line-height:1.5}
+  .st-btn.on{border-color:var(--navy-mid);background:var(--navy-light);color:var(--navy)}
+  .st-btn.urgent.on{border-color:var(--danger);background:var(--danger-light);color:var(--danger)}
+  .st-btn.hold.on{border-color:var(--warning);background:var(--warning-light);color:var(--warning)}
+
+  /* Buttons */
+  .btn{width:100%;padding:14px;border:none;border-radius:10px;font-family:inherit;font-size:.94rem;font-weight:800;cursor:pointer;transition:all .14s}
+  .btn-save{background:var(--navy);color:white}
+  .btn-save:hover{background:var(--navy-mid);transform:translateY(-1px);box-shadow:0 5px 18px rgba(26,58,92,.28)}
+  .btn-reset{background:var(--surface);color:var(--text2);border:1.5px solid var(--border)}
+  .btn-print{background:var(--gift-light);color:var(--gift);border:1.5px solid #e8c99a}
+
+  /* Order list */
+  .list-head{display:flex;align-items:center;justify-content:space-between;padding:11px 16px;background:var(--surface);border-bottom:1px solid var(--border)}
+  .list-count{font-size:.78rem;color:var(--text2);font-weight:600}
+  .list-count strong{color:var(--navy);font-size:1rem}
+  .list-clear{font-size:.7rem;color:var(--danger);background:none;border:none;cursor:pointer;font-family:inherit}
+  .order-list{max-height:360px;overflow-y:auto}
+  .order-list::-webkit-scrollbar{width:3px}
+  .order-list::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+  .order-item{padding:12px 16px;border-bottom:1px solid var(--border2);cursor:pointer;transition:background .1s}
+  .order-item:last-child{border:none}
+  .order-item:hover{background:var(--navy-light)}
+  .oi-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:3px}
+  .oi-name{font-weight:700;font-size:.9rem}
+  .oi-time{font-family:'JetBrains Mono',monospace;font-size:.7rem;color:var(--text3)}
+  .oi-row2{display:flex;align-items:center;gap:7px;font-size:.76rem;color:var(--text2);flex-wrap:wrap}
+  .oi-total{font-family:'JetBrains Mono',monospace;font-weight:600;color:var(--navy)}
+  .oi-prods{font-size:.72rem;color:var(--text3);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+  .badge{display:inline-block;padding:2px 7px;border-radius:9px;font-size:.65rem;font-weight:800}
+  .badge-pend{background:#fff3cd;color:#865900}
+  .badge-conf{background:var(--success-light);color:var(--success)}
+  .badge-urg{background:var(--danger-light);color:var(--danger)}
+  .badge-hold{background:var(--warning-light);color:var(--warning)}
+
+  .empty-state{text-align:center;padding:40px 20px;color:var(--text3)}
+  .empty-icon{font-size:2.4rem;margin-bottom:9px}
+  .empty-state p{font-size:.8rem;line-height:1.8}
+
+  /* Modal */
+  .overlay{display:none;position:fixed;inset:0;background:rgba(10,20,40,.55);z-index:300;align-items:center;justify-content:center;padding:18px}
+  .overlay.open{display:flex}
+  .modal{background:white;border-radius:18px;width:100%;max-width:560px;max-height:88vh;overflow-y:auto;box-shadow:var(--shadow-lg);animation:mIn .2s ease}
+  @keyframes mIn{from{opacity:0;transform:scale(.96)}to{opacity:1;transform:scale(1)}}
+  .modal-head{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:white;z-index:1}
+  .modal-head h2{font-size:1rem;font-weight:800}
+  .modal-close{background:var(--bg);border:none;border-radius:50%;width:32px;height:32px;cursor:pointer;font-size:.95rem;display:flex;align-items:center;justify-content:center;color:var(--text2)}
+  .modal-body{padding:20px}
+  .dsec{margin-bottom:16px}
+  .dsec-title{font-size:.7rem;font-weight:800;color:var(--text3);letter-spacing:.08em;text-transform:uppercase;margin-bottom:9px;border-bottom:1px solid var(--border);padding-bottom:5px}
+  .drow{display:flex;justify-content:space-between;align-items:flex-start;padding:5px 0;font-size:.86rem}
+  .dlabel{color:var(--text2);font-weight:500;min-width:76px}
+  .dvalue{font-weight:700;text-align:right;flex:1;margin-left:10px}
+  .dtotal{background:var(--navy);color:white;padding:11px 15px;border-radius:9px;display:flex;justify-content:space-between;align-items:center;margin-top:9px}
+  .dtotal-label{font-size:.83rem;font-weight:700}
+  .dtotal-val{font-family:'JetBrains Mono',monospace;font-size:1.2rem;font-weight:600}
+  .modal-actions{display:flex;gap:9px;margin-top:16px}
+  .modal-actions .btn{margin:0}
+
+  .toast{position:fixed;bottom:26px;left:50%;transform:translateX(-50%) translateY(80px);background:#1a1a1a;color:white;padding:12px 24px;border-radius:28px;font-weight:700;font-size:.88rem;box-shadow:0 8px 30px rgba(0,0,0,.25);transition:transform .28s cubic-bezier(.4,0,.2,1);z-index:999;white-space:nowrap}
+  .toast.show{transform:translateX(-50%) translateY(0)}
+
+  /* ── TOGGLE SWITCH ── */
+  .toggle-row{display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--border2)}
+  .toggle-row:last-child{border:none}
+  .toggle-info .toggle-label{font-size:.88rem;font-weight:700}
+  .toggle-info .toggle-desc{font-size:.74rem;color:var(--text2);margin-top:2px}
+  .toggle{position:relative;width:46px;height:26px;flex-shrink:0;margin-left:12px}
+  .toggle input{opacity:0;width:0;height:0;position:absolute}
+  .slider{position:absolute;inset:0;cursor:pointer;background:#d1ccc6;border-radius:13px;transition:.25s}
+  .slider::before{content:'';position:absolute;width:20px;height:20px;left:3px;bottom:3px;background:white;border-radius:50%;box-shadow:0 1px 4px rgba(0,0,0,.2);transition:.25s}
+  input:checked+.slider{background:var(--navy-mid)}
+  input:checked+.slider::before{transform:translateX(20px)}
+
+  /* ── SEPARATE RECIPIENT PANEL ── */
+  .recipient-panel{
+    margin-top:12px;
+    background:linear-gradient(135deg,#fff8f0 0%,#fff3e0 100%);
+    border:2px solid #e8c07a;
+    border-radius:var(--r-sm);
+    padding:14px 16px;
+    animation:slideDown .2s ease;
+  }
+  @keyframes slideDown{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
+  .recipient-panel-title{font-size:.74rem;font-weight:800;color:var(--gift);letter-spacing:.06em;text-transform:uppercase;margin-bottom:10px;display:flex;align-items:center;gap:6px}
+
+  /* ── NOSHI (熨斗) SECTION ── */
+  .noshi-section{margin-top:12px;border-top:1px solid var(--border2);padding-top:12px}
+  .noshi-toggle-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+  .noshi-toggle-label{font-size:.84rem;font-weight:800;color:var(--text)}
+  .noshi-panel{background:var(--navy-xlight);border:1.5px solid #c6d9ec;border-radius:var(--r-sm);padding:14px;animation:slideDown .2s ease}
+  .noshi-types{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:10px}
+  .noshi-type-btn{
+    padding:9px 6px;border:2px solid var(--border);border-radius:9px;
+    background:white;cursor:pointer;font-family:inherit;font-size:.76rem;font-weight:700;
+    color:var(--text2);text-align:center;transition:all .13s;line-height:1.4;
+  }
+  .noshi-type-btn.on{border-color:var(--navy-mid);background:var(--navy-light);color:var(--navy)}
+  .noshi-inscription-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px}
+
+  @media(max-width:960px){.layout{grid-template-columns:1fr}.sidebar{display:grid;grid-template-columns:1fr 1fr;gap:14px}.sidebar .card{margin-bottom:0}.order-card{grid-column:1/-1;margin-bottom:0}}
+  @media(max-width:640px){.layout{padding:12px;gap:12px}.sidebar{grid-template-columns:1fr}.prod-palette{grid-template-columns:repeat(2,1fr)}.row3{grid-template-columns:1fr 1fr}#clock{font-size:1rem}.call-pill{display:none}.nav-tab{padding:5px 10px;font-size:.72rem}}
+</style>
+
+<!-- ══ Firebase SDK ══ -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script>
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+//  🔧 Firebase 設定  ←  ここに自分の設定値を貼り付けてください
+//     Firebaseコンソール → プロジェクトの設定 → マイアプリ → SDK設定
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+const FIREBASE_CONFIG = {
+  apiKey:            "AIzaSyAQ_YvHTjTopye4mugSKJY_raQ901O2jDI",
+  authDomain:        "tel-order.firebaseapp.com",
+  projectId:         "tel-order",
+  storageBucket:     "tel-order.firebasestorage.app",
+  messagingSenderId: "1079351065297",
+  appId:             "1:1079351065297:web:ab6c6ac81487fecd35e3f0",
+  measurementId:     "G-1GCDZ3QCTS"
+};
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+firebase.initializeApp(FIREBASE_CONFIG);
+const db = firebase.firestore();
+</script>
+</head>
+<body>
+
+<nav>
+  <div class="nav-left">
+    <div class="nav-logo">🌴 カビラファーム 受付</div>
+    <div class="nav-tabs">
+      <a class="nav-tab" href="products.html">📦 商品DB</a>
+      <a class="nav-tab" href="shipping.html">🚚 送料設定</a>
+      <a class="nav-tab active" href="order-system.html">📞 注文受付</a>
+    </div>
+  </div>
+  <div class="nav-right">
+    <div class="call-pill"><div class="call-dot"></div>受付中</div>
+    <span id="dbStatus" style="font-size:.72rem;font-weight:700;color:#aaa">接続中...</span>
+    <div id="clock"></div>
+  </div>
+</nav>
+
+<div class="layout">
+  <div class="form-col">
+
+    <!-- 1. お客様情報 -->
+    <div class="card">
+      <div class="card-head"><div class="step-num">1</div><h2>お客様情報</h2></div>
+      <div class="card-body">
+        <div class="row2">
+          <div class="field"><label>お名前<span class="req">*</span></label><input type="text" id="cName" placeholder="山田 太郎" autocomplete="off"></div>
+          <div class="field"><label>電話番号<span class="req">*</span></label><input type="tel" id="cPhone" placeholder="090-0000-0000" autocomplete="off"></div>
+        </div>
+        <div class="field">
+          <label>郵便番号 → 住所自動入力</label>
+          <div class="zip-wrap">
+            <input type="text" id="cZip" placeholder="000-0000" maxlength="8" oninput="fmtZip(this)" onkeydown="if(event.key==='Enter')lookupZip()">
+            <button class="zip-btn" onclick="lookupZip()">🔍 住所検索</button>
+          </div>
+          <div class="zip-result" id="zipResult"></div>
+        </div>
+        <div class="field"><label>配達先住所<span class="req">*</span></label><input type="text" id="cAddr" placeholder="都道府県・市区町村・番地・マンション名・部屋番号" autocomplete="off"></div>
+      </div>
+    </div>
+
+    <!-- 2. 商品選択 -->
+    <div class="card">
+      <div class="card-head"><div class="step-num">2</div><h2>商品を選択 — タップして追加</h2></div>
+      <div class="card-body">
+
+        <!-- Category tabs -->
+        <div class="cat-tabs" id="catTabs"></div>
+
+        <!-- Product palette -->
+        <div class="prod-palette" id="prodPalette"></div>
+
+        <!-- Cart -->
+        <div class="cart-section">
+          <div class="cart-title">🛒 カート</div>
+          <div id="cartItems"><div class="cart-empty">商品をタップして追加してください</div></div>
+        </div>
+
+        <!-- Fee -->
+        <div class="fee-panel">
+          <div class="fee-row"><span class="fee-lbl">小計</span><span class="fee-val" id="fSub">¥0</span></div>
+          <div class="fee-row"><span class="fee-lbl">送料</span><span class="fee-val" id="fShip">¥0</span></div>
+          <div class="fee-row" id="codRow" style="display:none"><span class="fee-lbl">代引き手数料</span><span class="fee-val" id="fCod">¥0</span></div>
+          <hr class="fee-hr">
+          <div class="fee-row"><span class="fee-total-lbl">合計金額</span><span class="fee-total-val" id="fTotal">¥0</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. 配達・支払 -->
+    <div class="card">
+      <div class="card-head"><div class="step-num">3</div><h2>配達 ・ 支払</h2></div>
+      <div class="card-body">
+        <div class="row3">
+          <div class="field"><label>希望配達日</label><input type="date" id="dDate"></div>
+          <div class="field">
+            <label>希望時間帯</label>
+            <select id="dTime">
+              <option value="">指定なし</option>
+              <option>午前中（〜12時）</option><option>12〜14時</option><option>14〜16時</option>
+              <option>16〜18時</option><option>18〜20時</option><option>19〜21時</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>支払方法<span class="req">*</span></label>
+            <select id="payment" onchange="calcFees()">
+              <option value="">-- 選択 --</option>
+              <option>クレジットカード</option>
+              <option>代金引換</option>
+              <option>銀行振込（前払）</option>
+              <option>コンビニ払い</option>
+              <option>後払い</option>
+              <option>PayPay</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- 送り先 別人スイッチ -->
+        <div class="toggle-row" style="border:none;padding:10px 0 0">
+          <div class="toggle-info">
+            <div class="toggle-label">📦 依頼人と送り先が異なる</div>
+            <div class="toggle-desc">ギフト・代理注文など、別住所に発送する場合はON</div>
+          </div>
+          <label class="toggle">
+            <input type="checkbox" id="diffRecipient" onchange="toggleRecipient()">
+            <span class="slider"></span>
+          </label>
+        </div>
+
+        <!-- 別送り先入力パネル -->
+        <div id="recipientPanel" style="display:none">
+          <div class="recipient-panel">
+            <div class="recipient-panel-title">🏠 送り先（お届け先）情報</div>
+            <div class="row2">
+              <div class="field">
+                <label>送り先 お名前<span class="req">*</span></label>
+                <input type="text" id="rName" placeholder="送り先 氏名" autocomplete="off">
+              </div>
+              <div class="field">
+                <label>送り先 電話番号</label>
+                <input type="tel" id="rPhone" placeholder="送り先 電話番号" autocomplete="off">
+              </div>
+            </div>
+            <div class="field">
+              <label>送り先 郵便番号</label>
+              <div class="zip-wrap">
+                <input type="text" id="rZip" placeholder="000-0000" maxlength="8" oninput="fmtZip(this)" onkeydown="if(event.key==='Enter')lookupZipFor('r')">
+                <button class="zip-btn" onclick="lookupZipFor('r')">🔍 住所検索</button>
+              </div>
+              <div class="zip-result" id="rZipResult"></div>
+            </div>
+            <div class="field" style="margin-bottom:0">
+              <label>送り先 住所<span class="req">*</span></label>
+              <input type="text" id="rAddr" placeholder="都道府県・市区町村・番地・マンション名・部屋番号" autocomplete="off">
+            </div>
+          </div>
+        </div>
+
+        <!-- 備考・熨斗 -->
+        <div class="field" style="margin-top:14px">
+          <label>備考・特記事項</label>
+          <div class="chips">
+            <button class="chip" onclick="addChip('＊ギフト包装希望')">🎁 ギフト包装</button>
+            <button class="chip" onclick="addChip('＊領収書が必要（宛名：　）')">🧾 領収書</button>
+            <button class="chip" onclick="addChip('＊不在時は置き配可')">📦 置き配OK</button>
+            <button class="chip" onclick="addChip('＊配達前に電話連絡を希望')">📲 事前TEL</button>
+            <button class="chip" onclick="addChip('＊時間厳守')">⏰ 時間厳守</button>
+            <button class="chip" onclick="addChip('＊取り扱い注意・アレルギーあり')">⚠️ 注意あり</button>
+          </div>
+          <textarea id="notes" placeholder="引き継ぎメモ、特記事項など..."></textarea>
+
+          <!-- 熨斗（のし）セクション -->
+          <div class="noshi-section">
+            <div class="noshi-toggle-row">
+              <div class="noshi-toggle-label">🎀 熨斗（のし）</div>
+              <label class="toggle">
+                <input type="checkbox" id="noshiToggle" onchange="toggleNoshi()">
+                <span class="slider"></span>
+              </label>
+            </div>
+            <div id="noshiPanel" style="display:none">
+              <div class="noshi-panel">
+                <label style="margin-bottom:8px">熨斗の種類</label>
+                <div class="noshi-types">
+                  <button class="noshi-type-btn" data-noshi="御祝" onclick="selectNoshi(this)">🎊 御祝</button>
+                  <button class="noshi-type-btn" data-noshi="御中元" onclick="selectNoshi(this)">🎁 御中元</button>
+                  <button class="noshi-type-btn" data-noshi="御歳暮" onclick="selectNoshi(this)">🎄 御歳暮</button>
+                  <button class="noshi-type-btn" data-noshi="御礼" onclick="selectNoshi(this)">🙏 御礼</button>
+                  <button class="noshi-type-btn" data-noshi="粗品" onclick="selectNoshi(this)">📎 粗品</button>
+                  <button class="noshi-type-btn" data-noshi="その他" onclick="selectNoshi(this)">✏️ その他</button>
+                </div>
+                <div class="noshi-inscription-row">
+                  <div class="field" style="margin:0">
+                    <label>表書き（熨斗上段）</label>
+                    <input type="text" id="noshiUe" placeholder="御中元 など" autocomplete="off">
+                  </div>
+                  <div class="field" style="margin:0">
+                    <label>名入れ（熨斗下段）</label>
+                    <input type="text" id="noshiShita" placeholder="山田太郎 など" autocomplete="off">
+                  </div>
+                </div>
+                <div class="field" style="margin-top:10px;margin-bottom:0">
+                  <label>のし紙の種類</label>
+                  <select id="noshiPaper">
+                    <option value="">-- 選択 --</option>
+                    <option>蝶結び（一般祝い・お礼・お中元・お歳暮）</option>
+                    <option>結び切り（婚礼・快気祝い）</option>
+                    <option>あわじ結び（婚礼・慶弔両用）</option>
+                    <option>のし無し（弔事・お見舞い）</option>
+                    <option>短冊のし</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="card">
+      <div class="card-head"><h2>受付ステータス</h2></div>
+      <div class="card-body">
+        <div class="status-grid">
+          <button class="st-btn on" onclick="setStatus(this,'仮受け')">📝<br>仮受け</button>
+          <button class="st-btn" onclick="setStatus(this,'確認済')">✅<br>確認済</button>
+          <button class="st-btn urgent" onclick="setStatus(this,'至急')">🔴<br>至急</button>
+          <button class="st-btn hold" onclick="setStatus(this,'保留')">⏸<br>保留</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h2>アクション</h2></div>
+      <div class="card-body" style="display:flex;flex-direction:column;gap:9px">
+        <button class="btn btn-save" onclick="saveOrder()">💾 &nbsp;注文を保存する</button>
+        <button class="btn btn-reset" onclick="resetForm()">🔄 &nbsp;入力をクリア</button>
+        <button class="btn btn-print" onclick="printAll()">🖨 &nbsp;一覧を印刷</button>
+      </div>
+    </div>
+
+    <div class="card order-card">
+      <div class="list-head">
+        <div class="list-count">本日の受付: <strong id="orderNum">0</strong> 件</div>
+        <button class="list-clear" onclick="clearAll()">全削除</button>
+      </div>
+      <div class="order-list" id="orderList">
+        <div class="empty-state"><div class="empty-icon">📋</div><p>保存した注文が<br>ここに表示されます</p></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="overlay" onclick="closeOverlay(event)">
+  <div class="modal">
+    <div class="modal-head"><h2>注文詳細</h2><button class="modal-close" onclick="closeModal()">✕</button></div>
+    <div class="modal-body" id="modalBody"></div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+// ── Firebase Storage (Firestore) ────────────────────────
+// Firestoreのコレクション構成:
+//   orders/      … 注文データ (各ドキュメント = 1注文)
+//   config/products  … 商品リスト (1ドキュメント, field: list[])
+//   config/shipping  … 送料設定  (1ドキュメント)
+
+let orders  = [];
+let shipCfg = {
+  freeThresholdEnabled:true, freeThreshold:5500, codEnabled:true,
+  tiers:[{limit:'5500',unit:'円（小計）',fee:'0'},{limit:'',unit:'円（小計）',fee:'770'}],
+  codRows:[{limit:'9999',fee:'330'},{limit:'29999',fee:'440'},{limit:'99999',fee:'660'},{limit:'',fee:'1100'}]
+};
+
+// 接続状態表示
+function setDbStatus(ok, msg) {
+  const el = document.getElementById('dbStatus');
+  if (!el) return;
+  el.textContent = ok ? '🟢 ' + msg : '🔴 ' + msg;
+  el.style.color = ok ? '#5ce080' : '#ff7070';
+}
+
+// 送料設定をFirestoreから読み込み
+async function loadShipCfg() {
+  try {
+    const doc = await db.collection('config').doc('shipping').get();
+    if (doc.exists) shipCfg = doc.data();
+  } catch(e) { console.warn('送料設定の読み込みに失敗:', e); }
+}
+
+// 注文リストをリアルタイム同期
+function startOrdersListener() {
+  db.collection('orders')
+    .orderBy('id', 'desc')
+    .onSnapshot(snap => {
+      orders = snap.docs.map(d => d.data());
+      renderList();
+      setDbStatus(true, '同期中');
+    }, err => {
+      console.error('注文リスナーエラー:', err);
+      setDbStatus(false, 'オフライン');
+    });
+}
+
+// ── Built-in Kabira Farm products ──────────────────────
+const BUILTIN_PRODUCTS = [
+  // トロピカルジュース
+  {id:1001,name:'パッションフルーツドリンク 500ml',price:1850,unit:'本',category:'トロピカルジュース',emoji:'🧃'},
+  {id:1002,name:'パッションフルーツドリンク 270ml',price:1300,unit:'本',category:'トロピカルジュース',emoji:'🧃'},
+  {id:1003,name:'マンゴージュース',price:1630,unit:'本',category:'トロピカルジュース',emoji:'🥭'},
+  {id:1004,name:'パッションフルーツジュース100% 500ml',price:2820,unit:'本',category:'トロピカルジュース',emoji:'🍹'},
+  {id:1005,name:'パッションフルーツジュース100% 200ml',price:1420,unit:'本',category:'トロピカルジュース',emoji:'🍹'},
+  {id:1006,name:'ミニマンゴージュース 200ml',price:650,unit:'本',category:'トロピカルジュース',emoji:'🥭'},
+  // 果物
+  {id:2001,name:'パッションフルーツ苗',price:840,unit:'個',category:'果物',emoji:'🌱'},
+  {id:2002,name:'マンゴー苗',price:840,unit:'個',category:'果物',emoji:'🌿'},
+  // ギフト
+  {id:3001,name:'パッション＆マンゴーギフトセット E-2',price:5483,unit:'セット',category:'ギフト',emoji:'🎁'},
+  {id:3002,name:'パッション＆マンゴー詰合セット A-1',price:3853,unit:'セット',category:'ギフト',emoji:'🎀'},
+  {id:3003,name:'詰合セット',price:1896,unit:'セット',category:'ギフト',emoji:'📦'},
+  {id:3004,name:'ミニギフトセット',price:3304,unit:'セット',category:'ギフト',emoji:'🎁'},
+  {id:3005,name:'パッション＆マンゴージュースセット E-1',price:3803,unit:'セット',category:'ギフト',emoji:'🍹'},
+  {id:3006,name:'ギフト用箱代',price:50,unit:'枚',category:'ギフト',emoji:'📫'},
+  // その他
+  {id:4001,name:'石垣島記念品・パッションフルーツアロマドリップ 30ml',price:2900,unit:'個',category:'その他',emoji:'✨'},
+  {id:4002,name:'バタフライピー 10g',price:880,unit:'袋',category:'その他',emoji:'🫖'},
+  {id:4003,name:'ポストカード5枚セット / ボタニカルアロマ',price:700,unit:'セット',category:'その他',emoji:'🃏'},
+  {id:4004,name:'サングラス / 日焼け止め',price:1100,unit:'個',category:'その他',emoji:'😎'},
+  {id:4005,name:'詰め放題（石垣島の食材・冷凍保存）',price:9350,unit:'個',category:'その他',emoji:'🏝️'},
+  // 共通
+  {id:9001,name:'ビニール袋',price:5,unit:'枚',category:'共通',emoji:'🛍️'},
+];
+
+// Firestore から読み込んだ商品リスト (products.html が書き込む)
+let dbProducts = [];
+
+// Firestore から商品リストをリアルタイム同期
+function startProductsListener() {
+  db.collection('config').doc('products')
+    .onSnapshot(doc => {
+      if (doc.exists && doc.data().list) dbProducts = doc.data().list;
+      buildPalette();
+    }, err => console.warn('商品リスナー:', err));
+}
+
+// Merge: Firestore商品リスト + 内蔵商品 (名前が重複しないもの)
+function getProducts() {
+  const dbNames = new Set(dbProducts.map(p=>p.name));
+  return [...dbProducts, ...BUILTIN_PRODUCTS.filter(p=>!dbNames.has(p.name))];
+}
+
+// ── Cart state ─────────────────────────────────────────
+let cart = {}; // {id: {product, qty}}
+let currentCat = 'トロピカルジュース';
+let orderStatus = '仮受け';
+
+// ── Category config ────────────────────────────────────
+const CAT_CONFIG = {
+  'トロピカルジュース': {icon:'🧃',cls:'active-trop'},
+  '果物':              {icon:'🌿',cls:'active-fruit'},
+  'ギフト':            {icon:'🎁',cls:'active-gift'},
+  'その他':            {icon:'✨',cls:'active-other'},
+  '共通':              {icon:'🛍️',cls:'active-other'},
+};
+
+// ── Clock ──────────────────────────────────────────────
+setInterval(()=>{
+  const n=new Date();
+  document.getElementById('clock').textContent=
+    [n.getHours(),n.getMinutes(),n.getSeconds()].map(v=>String(v).padStart(2,'0')).join(':');
+},1000);
+document.getElementById('dDate').value = new Date().toISOString().split('T')[0];
+
+// ── Palette rendering ──────────────────────────────────
+function buildPalette() {
+  const prods = getProducts();
+  const cats  = [...new Set(prods.map(p=>p.category||'その他').filter(Boolean))];
+
+  // Sort categories
+  const CAT_ORDER = ['トロピカルジュース','果物','ギフト','その他','共通'];
+  cats.sort((a,b)=>{const ia=CAT_ORDER.indexOf(a),ib=CAT_ORDER.indexOf(b); return (ia<0?99:ia)-(ib<0?99:ib);});
+
+  // Tabs
+  const tabsEl = document.getElementById('catTabs');
+  tabsEl.innerHTML = cats.map(c=>{
+    const cfg = CAT_CONFIG[c]||{icon:'📦',cls:'active-other'};
+    return `<button class="cat-tab" data-cat="${c}" onclick="selectCat('${c}')">${cfg.icon} ${c}</button>`;
+  }).join('');
+
+  // Select first cat
+  if (cats.length) selectCat(currentCat || cats[0]);
+}
+
+function selectCat(cat) {
+  currentCat = cat;
+  // Update tab highlight
+  document.querySelectorAll('.cat-tab').forEach(t=>{
+    const cfg = CAT_CONFIG[t.dataset.cat]||{cls:'active-other'};
+    t.className = 'cat-tab' + (t.dataset.cat===cat ? ' '+cfg.cls : '');
+  });
+
+  // Render tiles
+  const prods = getProducts().filter(p=>(p.category||'その他')===cat);
+  const palette = document.getElementById('prodPalette');
+  palette.innerHTML = prods.map(p=>{
+    const inCart = cart[p.id]?.qty > 0;
+    const qty    = cart[p.id]?.qty || 0;
+    const emoji  = p.emoji || '📦';
+    return `<div class="prod-tile${inCart?' in-cart':''}" id="tile${p.id}" onclick="addToCart(${p.id})">
+      ${qty>0?`<div class="prod-tile-badge">${qty}</div>`:''}
+      <div class="prod-tile-emoji">${emoji}</div>
+      <div class="prod-tile-name">${p.name}</div>
+      <div class="prod-tile-price">¥${p.price.toLocaleString('ja-JP')} / ${p.unit||'個'}</div>
+    </div>`;
+  }).join('');
+  if (!prods.length) palette.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:20px;color:var(--text3);font-size:.84rem">商品がありません</div>';
+}
+
+// ── Cart operations ────────────────────────────────────
+function addToCart(prodId) {
+  const p = getProducts().find(x=>x.id===prodId); if(!p) return;
+  if (!cart[prodId]) cart[prodId] = {product:p, qty:0};
+  cart[prodId].qty++;
+  renderCart();
+  // Update tile badge
+  refreshTile(prodId);
+  // Haptic if supported
+  if (navigator.vibrate) navigator.vibrate(30);
+}
+
+function changeQty(prodId, delta) {
+  if (!cart[prodId]) return;
+  cart[prodId].qty += delta;
+  if (cart[prodId].qty <= 0) delete cart[prodId];
+  renderCart();
+  refreshTile(prodId);
+}
+
+function removeFromCart(prodId) {
+  delete cart[prodId];
+  renderCart();
+  refreshTile(prodId);
+}
+
+function refreshTile(prodId) {
+  const tile = document.getElementById(`tile${prodId}`);
+  if (!tile) return;
+  const qty = cart[prodId]?.qty || 0;
+  tile.className = 'prod-tile' + (qty>0?' in-cart':'');
+  const badge = tile.querySelector('.prod-tile-badge');
+  if (qty>0) {
+    if (badge) badge.textContent=qty;
+    else tile.insertAdjacentHTML('afterbegin',`<div class="prod-tile-badge">${qty}</div>`);
+  } else if (badge) badge.remove();
+}
+
+function renderCart() {
+  const items = Object.values(cart).filter(x=>x.qty>0);
+  const el = document.getElementById('cartItems');
+  if (!items.length) {
+    el.innerHTML = '<div class="cart-empty">商品をタップして追加してください</div>';
+    calcFees(); return;
+  }
+  el.innerHTML = items.map(({product:p,qty})=>`
+    <div class="cart-item">
+      <div>
+        <div class="ci-name">${p.emoji||'📦'} ${p.name}</div>
+        <div class="ci-price">¥${p.price.toLocaleString('ja-JP')} × ${qty}</div>
+      </div>
+      <div class="ci-qty">
+        <button class="qty-btn" onclick="changeQty(${p.id},-1)">−</button>
+        <span class="qty-num">${qty}</span>
+        <button class="qty-btn" onclick="changeQty(${p.id},+1)">＋</button>
+      </div>
+      <div class="ci-sub">¥${(p.price*qty).toLocaleString('ja-JP')}</div>
+      <button class="ci-del" onclick="removeFromCart(${p.id})">✕</button>
+    </div>
+  `).join('');
+  calcFees();
+}
+
+// ── Shipping ───────────────────────────────────────────
+function fmt(n){return '¥'+Math.round(n).toLocaleString('ja-JP')}
+
+function calcShipping(sub) {
+  if (shipCfg.freeThresholdEnabled && sub>=(shipCfg.freeThreshold||0)) return {fee:0,free:true};
+  for (const t of (shipCfg.tiers||[])) {
+    if (!t.unit?.includes('円')) continue;
+    const lim=parseFloat(t.limit);
+    if (!t.limit||sub<=lim) return {fee:parseFloat(t.fee)||0,free:false};
+  }
+  return {fee:770,free:false};
+}
+function calcCodFee(base) {
+  for (const r of (shipCfg.codRows||[])) {
+    const lim=parseFloat(r.limit);
+    if (!r.limit||base<=lim) return parseFloat(r.fee)||0;
+  }
+  return 0;
+}
+
+function calcFees() {
+  const sub = Object.values(cart).reduce((s,{product:p,qty})=>s+p.price*qty,0);
+  const {fee:ship,free} = calcShipping(sub);
+  const isCod = document.getElementById('payment').value==='代金引換';
+  const codFee = isCod ? calcCodFee(sub+ship) : 0;
+  document.getElementById('codRow').style.display = isCod?'':'none';
+  document.getElementById('fSub').textContent  = fmt(sub);
+  document.getElementById('fShip').innerHTML   = free?`${fmt(0)}<span class="free-badge">無料</span>`:fmt(ship);
+  document.getElementById('fCod').textContent  = fmt(codFee);
+  document.getElementById('fTotal').textContent= fmt(sub+ship+codFee);
+}
+
+// ── ZIP lookup (汎用) ─────────────────────────────────
+function fmtZip(el) {
+  let v=el.value.replace(/[^0-9]/g,'');
+  if(v.length>3) v=v.slice(0,3)+'-'+v.slice(3,7);
+  el.value=v;
+}
+
+async function lookupZipFor(prefix) {
+  const zipId    = prefix==='c' ? 'cZip'      : 'rZip';
+  const addrId   = prefix==='c' ? 'cAddr'     : 'rAddr';
+  const resultId = prefix==='c' ? 'zipResult' : 'rZipResult';
+  const zip = document.getElementById(zipId).value.replace(/[^0-9]/g,'');
+  const resultEl = document.getElementById(resultId);
+  if (zip.length < 7) { resultEl.textContent='7桁の郵便番号を入力してください'; resultEl.className='zip-result zip-error'; return; }
+  resultEl.textContent='🔍 検索中...'; resultEl.className='zip-result';
+  try {
+    const res  = await fetch(`https://zipcloud.ibsnet.co.jp/api/search?zipcode=${zip}`);
+    const data = await res.json();
+    if (data.status===200 && data.results) {
+      const r   = data.results[0];
+      const addr= r.address1 + r.address2 + r.address3;
+      resultEl.textContent = '✅ ' + addr; resultEl.className = 'zip-result';
+      const addrEl = document.getElementById(addrId);
+      if (!addrEl.value) addrEl.value = addr;
+      else if (!addrEl.value.startsWith(r.address1)) addrEl.value = addr + ' ' + addrEl.value;
+    } else {
+      resultEl.textContent='該当する住所が見つかりませんでした'; resultEl.className='zip-result zip-error';
+    }
+  } catch(e) {
+    resultEl.textContent='住所の取得に失敗しました（オフライン？）'; resultEl.className='zip-result zip-error';
+  }
+}
+// 旧呼び出し互換
+function lookupZip() { lookupZipFor('c'); }
+
+// ── Recipient / Noshi toggles ──────────────────────────
+function toggleRecipient() {
+  const on = document.getElementById('diffRecipient').checked;
+  document.getElementById('recipientPanel').style.display = on ? '' : 'none';
+}
+function toggleNoshi() {
+  const on = document.getElementById('noshiToggle').checked;
+  document.getElementById('noshiPanel').style.display = on ? '' : 'none';
+}
+function selectNoshi(btn) {
+  document.querySelectorAll('.noshi-type-btn').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  // 表書きを自動セット（その他以外）
+  if (btn.dataset.noshi !== 'その他') {
+    document.getElementById('noshiUe').value = btn.dataset.noshi;
+  }
+}
+
+// ── Helpers ────────────────────────────────────────────
+function addChip(t){const el=document.getElementById('notes');el.value=el.value?el.value+'\n'+t:t}
+function setStatus(btn,s){document.querySelectorAll('.st-btn').forEach(b=>b.classList.remove('on'));btn.classList.add('on');orderStatus=s}
+
+// ── Save ───────────────────────────────────────────────
+async function saveOrder() {
+  const name =document.getElementById('cName').value.trim();
+  const phone=document.getElementById('cPhone').value.trim();
+  const addr =document.getElementById('cAddr').value.trim();
+  const pay  =document.getElementById('payment').value;
+  if(!name) {toast('⚠️ お名前を入力してください');return}
+  if(!phone){toast('⚠️ 電話番号を入力してください');return}
+  if(!addr) {toast('⚠️ 配達先住所を入力してください');return}
+  if(!pay)  {toast('⚠️ 支払方法を選択してください');return}
+  const items=Object.values(cart).filter(x=>x.qty>0);
+  if(!items.length){toast('⚠️ 商品を追加してください');return}
+
+  // 別送り先
+  const diffRecipient = document.getElementById('diffRecipient').checked;
+  let recipient = null;
+  if (diffRecipient) {
+    const rName = document.getElementById('rName').value.trim();
+    const rAddr = document.getElementById('rAddr').value.trim();
+    if (!rName) { toast('⚠️ 送り先のお名前を入力してください'); return; }
+    if (!rAddr) { toast('⚠️ 送り先の住所を入力してください'); return; }
+    recipient = {
+      name:  rName,
+      phone: document.getElementById('rPhone').value.trim(),
+      zip:   document.getElementById('rZip').value,
+      addr:  rAddr
+    };
+  }
+
+  // 熨斗
+  const noshiOn = document.getElementById('noshiToggle').checked;
+  let noshi = null;
+  if (noshiOn) {
+    const selectedBtn = document.querySelector('.noshi-type-btn.on');
+    noshi = {
+      type:   selectedBtn ? selectedBtn.dataset.noshi : '',
+      ue:     document.getElementById('noshiUe').value.trim(),
+      shita:  document.getElementById('noshiShita').value.trim(),
+      paper:  document.getElementById('noshiPaper').value
+    };
+  }
+
+  const sub=items.reduce((s,{product:p,qty})=>s+p.price*qty,0);
+  const {fee:ship}=calcShipping(sub);
+  const isCod=pay==='代金引換';
+  const codFee=isCod?calcCodFee(sub+ship):0;
+
+  const order={
+    id:Date.now(),
+    timeStr:new Date().toLocaleTimeString('ja-JP',{hour:'2-digit',minute:'2-digit'}),
+    dateStr:new Date().toLocaleDateString('ja-JP'),
+    status:orderStatus,
+    customer:{name,phone,zip:document.getElementById('cZip').value,addr},
+    recipient,
+    noshi,
+    products:items.map(({product:p,qty})=>({name:p.name,qty,unit:p.unit||'個',price:p.price,emoji:p.emoji||''})),
+    delivery:{date:document.getElementById('dDate').value,time:document.getElementById('dTime').value},
+    payment:pay,
+    fees:{sub,ship,codFee,total:sub+ship+codFee},
+    notes:document.getElementById('notes').value
+  };
+  orders.unshift(order);
+  try {
+    await db.collection('orders').doc(String(order.id)).set(order);
+    toast('✅ 注文を保存しました（クラウド同期済）');
+  } catch(e) {
+    console.error('保存エラー:', e);
+    toast('⚠️ 保存に失敗しました。ネット接続を確認してください');
+    orders.shift();
+    return;
+  }
+  renderList();
+  resetForm();
+}
+
+function resetForm(){
+  ['cName','cPhone','cZip','cAddr','notes',
+   'rName','rPhone','rZip','rAddr',
+   'noshiUe','noshiShita'].forEach(id=>{const el=document.getElementById(id);if(el)el.value=''});
+  document.getElementById('zipResult').textContent='';
+  document.getElementById('rZipResult').textContent='';
+  document.getElementById('dDate').value=new Date().toISOString().split('T')[0];
+  document.getElementById('dTime').value='';
+  document.getElementById('payment').value='';
+  document.getElementById('noshiPaper').value='';
+  // トグルリセット
+  document.getElementById('diffRecipient').checked=false;
+  document.getElementById('recipientPanel').style.display='none';
+  document.getElementById('noshiToggle').checked=false;
+  document.getElementById('noshiPanel').style.display='none';
+  document.querySelectorAll('.noshi-type-btn').forEach(b=>b.classList.remove('on'));
+  cart={};
+  renderCart();
+  buildPalette();
+  orderStatus='仮受け';
+  document.querySelectorAll('.st-btn').forEach((b,i)=>b.classList.toggle('on',i===0));
+}
+
+// ── Order list ─────────────────────────────────────────
+function renderList(){
+  document.getElementById('orderNum').textContent=orders.length;
+  const el=document.getElementById('orderList');
+  if(!orders.length){el.innerHTML='<div class="empty-state"><div class="empty-icon">📋</div><p>保存した注文が<br>ここに表示されます</p></div>';return}
+  const bc={仮受け:'badge-pend',確認済:'badge-conf',至急:'badge-urg',保留:'badge-hold'};
+  el.innerHTML=orders.map(o=>{
+    const prods=o.products.map(p=>`${p.emoji||''}${p.name}×${p.qty}`).join(' / ');
+    const extraBadges=[
+      o.recipient ? '<span style="background:#fdf3e3;color:#8b5a1a;font-size:.62rem;font-weight:800;padding:1px 6px;border-radius:8px;border:1px solid #e8c07a">別送り先</span>' : '',
+      o.noshi     ? '<span style="background:var(--navy-light);color:var(--navy);font-size:.62rem;font-weight:800;padding:1px 6px;border-radius:8px;border:1px solid #c6d9ec">熨斗あり</span>' : ''
+    ].filter(Boolean).join(' ');
+    return `<div class="order-item" onclick="showDetail(${o.id})">
+      <div class="oi-top">
+        <div class="oi-name">${o.customer.name} <span class="badge ${bc[o.status]||'badge-pend'}">${o.status}</span> ${extraBadges}</div>
+        <div class="oi-time">${o.timeStr}</div>
+      </div>
+      <div class="oi-row2"><span>${o.customer.phone}</span><span class="oi-total">${fmt(o.fees.total)}</span><span>${o.payment}</span></div>
+      <div class="oi-prods">${prods}</div>
+    </div>`;
+  }).join('');
+}
+
+// ── Detail modal ───────────────────────────────────────
+function showDetail(id){
+  const o=orders.find(x=>x.id===id);if(!o)return;
+  const bc={仮受け:'badge-pend',確認済:'badge-conf',至急:'badge-urg',保留:'badge-hold'};
+  const prodRows=o.products.map(p=>`<div class="drow"><span class="dlabel">${p.emoji||''}${p.name}</span><span class="dvalue">${p.qty}${p.unit} × ${fmt(p.price)} = <strong>${fmt(p.qty*p.price)}</strong></span></div>`).join('');
+
+  // 別送り先セクション
+  const recipientSection = o.recipient ? `
+    <div class="dsec">
+      <div class="dsec-title" style="color:var(--gift)">🏠 送り先（依頼人と異なる）</div>
+      <div class="drow"><span class="dlabel">お名前</span><span class="dvalue">${o.recipient.name}</span></div>
+      ${o.recipient.phone?`<div class="drow"><span class="dlabel">電話番号</span><span class="dvalue">${o.recipient.phone}</span></div>`:''}
+      <div class="drow"><span class="dlabel">郵便番号</span><span class="dvalue">${o.recipient.zip||'—'}</span></div>
+      <div class="drow"><span class="dlabel">住所</span><span class="dvalue">${o.recipient.addr}</span></div>
+    </div>` : '';
+
+  // 熨斗セクション
+  const noshiSection = o.noshi ? `
+    <div class="dsec">
+      <div class="dsec-title" style="color:var(--navy)">🎀 熨斗（のし）</div>
+      ${o.noshi.type?`<div class="drow"><span class="dlabel">種類</span><span class="dvalue">${o.noshi.type}</span></div>`:''}
+      ${o.noshi.paper?`<div class="drow"><span class="dlabel">のし紙</span><span class="dvalue">${o.noshi.paper}</span></div>`:''}
+      ${o.noshi.ue?`<div class="drow"><span class="dlabel">表書き</span><span class="dvalue">${o.noshi.ue}</span></div>`:''}
+      ${o.noshi.shita?`<div class="drow"><span class="dlabel">名入れ</span><span class="dvalue">${o.noshi.shita}</span></div>`:''}
+    </div>` : '';
+
+  document.getElementById('modalBody').innerHTML=`
+    <div style="display:flex;align-items:center;gap:9px;margin-bottom:14px">
+      <span class="badge ${bc[o.status]||'badge-pend'}" style="font-size:.8rem;padding:3px 11px">${o.status}</span>
+      <span style="font-size:.78rem;color:var(--text2)">受付：${o.dateStr} ${o.timeStr}</span>
+      ${o.recipient?'<span style="background:#fdf3e3;color:#8b5a1a;font-size:.72rem;font-weight:800;padding:2px 9px;border-radius:9px;border:1px solid #e8c07a">別送り先あり</span>':''}
+      ${o.noshi?'<span style="background:var(--navy-light);color:var(--navy);font-size:.72rem;font-weight:800;padding:2px 9px;border-radius:9px;border:1px solid #c6d9ec">熨斗あり</span>':''}
+    </div>
+    <div class="dsec"><div class="dsec-title">依頼人（注文者）</div>
+      <div class="drow"><span class="dlabel">お名前</span><span class="dvalue">${o.customer.name}</span></div>
+      <div class="drow"><span class="dlabel">電話番号</span><span class="dvalue">${o.customer.phone}</span></div>
+      <div class="drow"><span class="dlabel">郵便番号</span><span class="dvalue">${o.customer.zip||'—'}</span></div>
+      <div class="drow"><span class="dlabel">${o.recipient?'依頼人住所':'配達先'}</span><span class="dvalue">${o.customer.addr}</span></div>
+    </div>
+    ${recipientSection}
+    <div class="dsec"><div class="dsec-title">注文商品</div>${prodRows}</div>
+    <div class="dsec"><div class="dsec-title">費用明細</div>
+      <div class="drow"><span class="dlabel">小計</span><span class="dvalue">${fmt(o.fees.sub)}</span></div>
+      <div class="drow"><span class="dlabel">送料</span><span class="dvalue">${fmt(o.fees.ship)}</span></div>
+      ${o.fees.codFee?`<div class="drow"><span class="dlabel">代引き手数料</span><span class="dvalue">${fmt(o.fees.codFee)}</span></div>`:''}
+      <div class="dtotal"><span class="dtotal-label">合計金額</span><span class="dtotal-val">${fmt(o.fees.total)}</span></div>
+    </div>
+    <div class="dsec"><div class="dsec-title">配達・支払</div>
+      <div class="drow"><span class="dlabel">希望配達日</span><span class="dvalue">${o.delivery.date||'—'}</span></div>
+      <div class="drow"><span class="dlabel">時間帯</span><span class="dvalue">${o.delivery.time||'指定なし'}</span></div>
+      <div class="drow"><span class="dlabel">支払方法</span><span class="dvalue">${o.payment}</span></div>
+    </div>
+    ${noshiSection}
+    ${o.notes?`<div class="dsec"><div class="dsec-title">備考</div><div style="background:var(--bg);padding:11px;border-radius:8px;font-size:.86rem;white-space:pre-wrap;line-height:1.7">${o.notes}</div></div>`:''}
+    <div class="modal-actions">
+      <button class="btn btn-reset" onclick="deleteOrder(${o.id})" style="flex:1">🗑 削除</button>
+      <button class="btn btn-save" onclick="closeModal()" style="flex:2">閉じる</button>
+    </div>`;
+  document.getElementById('overlay').classList.add('open');
+}
+
+function deleteOrder(id){if(!confirm('この注文を削除しますか？'))return;db.collection('orders').doc(String(id)).delete().then(()=>{orders=orders.filter(o=>o.id!==id);renderList();closeModal();toast('🗑 削除しました')}).catch(e=>{toast('⚠️ 削除に失敗しました')})}
+function clearAll(){if(!confirm('受付一覧をすべて削除しますか？'))return;const batch=db.batch();orders.forEach(o=>batch.delete(db.collection('orders').doc(String(o.id))));batch.commit().then(()=>{orders=[];renderList();toast('🗑 全削除しました')}).catch(e=>toast('⚠️ 削除に失敗しました'))}
+function closeModal(){document.getElementById('overlay').classList.remove('open')}
+function closeOverlay(e){if(e.target===e.currentTarget)closeModal()}
+
+// ── Print ──────────────────────────────────────────────
+function printAll(){
+  if(!orders.length){toast('⚠️ 保存された注文がありません');return}
+  const today=new Date().toLocaleDateString('ja-JP');
+  const rows=orders.map(o=>{
+    const prods=o.products.map(p=>`${p.name} ${p.qty}${p.unit}`).join(' / ');
+    const recipientCell = o.recipient
+      ? `<strong style="color:#8b5a1a">別送り先</strong><br>${o.recipient.name}<br><small>${o.recipient.zip||''} ${o.recipient.addr}</small>`
+      : '<span style="color:#aaa">同一</span>';
+    const noshiCell = o.noshi
+      ? `${o.noshi.type||''}${o.noshi.ue?'／'+o.noshi.ue:''}${o.noshi.shita?'<br>'+o.noshi.shita:''}`
+      : '—';
+    return `<tr>
+      <td>${o.timeStr}</td>
+      <td><strong>${o.customer.name}</strong><br><small>${o.customer.phone}</small></td>
+      <td style="font-size:.74rem">${o.customer.zip||''} ${o.customer.addr}</td>
+      <td style="font-size:.74rem">${recipientCell}</td>
+      <td style="font-size:.78rem">${prods}</td>
+      <td>${o.delivery.date||''}<br><small>${o.delivery.time||''}</small></td>
+      <td>${o.payment}</td>
+      <td style="font-family:monospace">${fmt(o.fees.sub)}</td>
+      <td style="font-family:monospace">${fmt(o.fees.ship)}</td>
+      <td style="font-family:monospace">${o.fees.codFee?fmt(o.fees.codFee):'—'}</td>
+      <td style="font-family:monospace;font-weight:bold">${fmt(o.fees.total)}</td>
+      <td style="font-size:.72rem">${noshiCell}</td>
+      <td><span style="padding:2px 6px;border-radius:6px;font-size:.68rem;background:${o.status==='至急'?'#fdf0f0':o.status==='確認済'?'#eaf5ee':'#fff3cd'}">${o.status}</span></td>
+      <td style="font-size:.7rem">${o.notes||''}</td>
+    </tr>`;
+  }).join('');
+  const win=window.open('','_blank');
+  win.document.write(`<html><head><meta charset="UTF-8"><title>注文仮受け一覧 ${today}</title>
+  <style>body{font-family:sans-serif;padding:16px;font-size:.76rem}h1{font-size:.92rem;margin-bottom:3px}p{color:#666;font-size:.68rem;margin-bottom:10px}table{width:100%;border-collapse:collapse}th,td{border:1px solid #ccc;padding:4px 6px;vertical-align:top;text-align:left}th{background:#f0f0f0;font-size:.66rem;white-space:nowrap}tr:nth-child(even){background:#fafafa}@media print{@page{size:A4 landscape;margin:6mm}}</style>
+  </head><body>
+  <h1>🌴 カビラファーム 電話注文 仮受け一覧</h1>
+  <p>印刷日時：${new Date().toLocaleString('ja-JP')} ／ 受付件数：${orders.length}件</p>
+  <table><thead><tr>
+    <th>受付</th><th>依頼人</th><th>依頼人住所</th><th>送り先</th>
+    <th>注文商品</th><th>希望配達</th><th>支払</th>
+    <th>小計</th><th>送料</th><th>代引手数料</th><th>合計</th>
+    <th>熨斗</th><th>状態</th><th>備考</th>
+  </tr></thead><tbody>${rows}</tbody></table>
+  </body></html>`);
+  win.document.close();win.print();
+}
+
+// ── Toast ──────────────────────────────────────────────
+function toast(msg){const el=document.getElementById('toast');el.textContent=msg;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),2600)}
+
+// ── Init ───────────────────────────────────────────────
+async function initApp() {
+  await loadShipCfg();
+  startOrdersListener();
+  startProductsListener();
+  buildPalette();
+  calcFees();
+  document.getElementById('dDate').value = new Date().toISOString().split('T')[0];
+}
+initApp();
+setInterval(()=>{const n=new Date();document.getElementById('clock').textContent=n.toLocaleTimeString('ja-JP',{hour:'2-digit',minute:'2-digit'})},1000);
+document.getElementById('clock').textContent=new Date().toLocaleTimeString('ja-JP',{hour:'2-digit',minute:'2-digit'});
+</script>
+</body>
+</html>
