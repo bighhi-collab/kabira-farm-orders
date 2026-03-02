@@ -429,9 +429,14 @@ const DEFAULT_PRODUCTS = [
   {id:4003,code:'KF-O003',name:'ポストカード5枚セット / ボタニカルアロマ',price:700,unit:'セット',category:'その他',emoji:'🃏',stock:null,alert:5,note:''},
   {id:4004,code:'KF-O004',name:'サングラス / 日焼け止め',price:1100,unit:'個',category:'その他',emoji:'😎',stock:null,alert:5,note:''},
   {id:4005,code:'KF-O005',name:'詰め放題（石垣島の食材・冷凍保存）',price:9350,unit:'個',category:'その他',emoji:'🏝️',stock:null,alert:3,note:''},
+  // ジャム
+  {id:5001,code:'KF-JM001',name:'パッションフルーツジャム',price:950,unit:'個',category:'ジャム',emoji:'🍯',stock:null,alert:5,note:'※価格は要確認'},
+  {id:5002,code:'KF-JM002',name:'マンゴージャム',price:950,unit:'個',category:'ジャム',emoji:'🥭',stock:null,alert:5,note:'※価格は要確認'},
+  {id:5003,code:'KF-JM003',name:'パッション＆マンゴージャムセット',price:2000,unit:'セット',category:'ジャム',emoji:'🍯',stock:null,alert:3,note:'※価格は要確認'},
+  // 共通
   {id:9001,code:'KF-Z001',name:'ビニール袋',price:5,unit:'枚',category:'共通',emoji:'🛍️',stock:null,alert:50,note:''},
 ];
-const DEFAULT_CATEGORIES = ['トロピカルジュース','果物','ギフト','その他','共通'];
+const DEFAULT_CATEGORIES = ['トロピカルジュース','ジャム','果物','ギフト','その他','共通'];
 
 // Initialize with defaults if first time
 let products   = [];
@@ -446,14 +451,17 @@ async function loadFromFirestore() {
       db.collection('config').doc('products').get(),
       db.collection('config').doc('categories').get()
     ]);
-    if (prodDoc.exists && prodDoc.data().list) {
+
+    if (prodDoc.exists && prodDoc.data().list && prodDoc.data().list.length > 0) {
       products = prodDoc.data().list;
     } else {
-      // 初回: デフォルト商品を書き込む
+      // 初回: デフォルト商品をFirestoreに書き込む
       products = DEFAULT_PRODUCTS;
       await db.collection('config').doc('products').set({list: products});
+      toast('✅ カビラファームの商品データを初期登録しました');
     }
-    if (catDoc.exists && catDoc.data().list) {
+
+    if (catDoc.exists && catDoc.data().list && catDoc.data().list.length > 0) {
       categories = catDoc.data().list;
     } else {
       categories = DEFAULT_CATEGORIES;
@@ -461,13 +469,14 @@ async function loadFromFirestore() {
     }
   } catch(e) {
     console.error('Firestoreからの読み込みに失敗:', e);
-    // フォールバック: デフォルト商品を使用
     products = DEFAULT_PRODUCTS;
     categories = DEFAULT_CATEGORIES;
-    toast('⚠️ クラウド接続に失敗しました。設定を確認してください');
+    toast('⚠️ クラウド接続に失敗しました。Firestoreのセキュリティルールを確認してください');
   }
   refreshCategoryDropdowns();
   renderTable();
+  // 読み込み件数を通知
+  document.getElementById('lastSaved').textContent = `${products.length}件の商品を読み込みました`;
 }
 
 async function save() {

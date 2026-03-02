@@ -85,6 +85,7 @@
   .cat-tab.active-gift{border-color:var(--gift);background:var(--gift-light);color:var(--gift)}
   .cat-tab.active-fruit{border-color:var(--fruit);background:var(--fruit-light);color:var(--fruit)}
   .cat-tab.active-other{border-color:var(--other);background:var(--other-light);color:var(--other)}
+  .cat-tab.active-jam{border-color:#b85c00;background:#fff3e6;color:#b85c00}
 
   /* Product grid */
   .prod-palette{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
@@ -582,6 +583,10 @@ const BUILTIN_PRODUCTS = [
   {id:4003,name:'ポストカード5枚セット / ボタニカルアロマ',price:700,unit:'セット',category:'その他',emoji:'🃏'},
   {id:4004,name:'サングラス / 日焼け止め',price:1100,unit:'個',category:'その他',emoji:'😎'},
   {id:4005,name:'詰め放題（石垣島の食材・冷凍保存）',price:9350,unit:'個',category:'その他',emoji:'🏝️'},
+  // ジャム
+  {id:5001,name:'パッションフルーツジャム',price:950,unit:'個',category:'ジャム',emoji:'🍯'},
+  {id:5002,name:'マンゴージャム',price:950,unit:'個',category:'ジャム',emoji:'🥭'},
+  {id:5003,name:'パッション＆マンゴージャムセット',price:2000,unit:'セット',category:'ジャム',emoji:'🍯'},
   // 共通
   {id:9001,name:'ビニール袋',price:5,unit:'枚',category:'共通',emoji:'🛍️'},
 ];
@@ -593,15 +598,27 @@ let dbProducts = [];
 function startProductsListener() {
   db.collection('config').doc('products')
     .onSnapshot(doc => {
-      if (doc.exists && doc.data().list) dbProducts = doc.data().list;
+      if (doc.exists && doc.data().list && doc.data().list.length > 0) {
+        // Firestoreに商品データがある → それを使う
+        dbProducts = doc.data().list;
+      } else {
+        // Firestoreに商品がない → 内蔵商品を自動書き込みして初期化
+        db.collection('config').doc('products').set({list: BUILTIN_PRODUCTS})
+          .then(() => console.log('内蔵商品をFirestoreに初期書き込みしました'))
+          .catch(e => console.warn('初期書き込み失敗:', e));
+        dbProducts = [];
+      }
       buildPalette();
-    }, err => console.warn('商品リスナー:', err));
+    }, err => {
+      console.warn('商品リスナーエラー:', err);
+      buildPalette();
+    });
 }
 
-// Merge: Firestore商品リスト + 内蔵商品 (名前が重複しないもの)
+// 商品リストを返す: Firestoreに商品があればそれを優先、なければ内蔵商品
 function getProducts() {
-  const dbNames = new Set(dbProducts.map(p=>p.name));
-  return [...dbProducts, ...BUILTIN_PRODUCTS.filter(p=>!dbNames.has(p.name))];
+  if (dbProducts.length > 0) return dbProducts;
+  return BUILTIN_PRODUCTS;
 }
 
 // ── Cart state ─────────────────────────────────────────
@@ -612,6 +629,7 @@ let orderStatus = '仮受け';
 // ── Category config ────────────────────────────────────
 const CAT_CONFIG = {
   'トロピカルジュース': {icon:'🧃',cls:'active-trop'},
+  'ジャム':            {icon:'🍯',cls:'active-jam'},
   '果物':              {icon:'🌿',cls:'active-fruit'},
   'ギフト':            {icon:'🎁',cls:'active-gift'},
   'その他':            {icon:'✨',cls:'active-other'},
